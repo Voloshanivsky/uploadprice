@@ -1,5 +1,5 @@
 <?php
-/* (c) 2016 Voloshanivsky, voloshanivsky@gmail.com */
+/* (c) 2016 Voloshanivsky,  voloshanivsky@gmail.com */
 class UploadpriceTable extends EntityTable{
   function __construct() {
     parent::__construct();
