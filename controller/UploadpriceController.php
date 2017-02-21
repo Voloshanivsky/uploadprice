@@ -43,12 +43,14 @@ class UploadpriceController extends Myadminv2Controller {
           'rowstart' => $col[0]->getRowstart(),
           'colname' => $col[0]->getColname(),
           'colprice' => $col[0]->getColprice(),
+          'priceincurr' => $col[0]->getPriceInCurr(),
         );
     } else {
       $data = array(
           'rowstart' => 1,
           'colname' => 1,
-          'colprice' => 2,
+          'colprice' => '',
+          'priceincurr' => 0,
         );
     }
     $this->view->assign('data', $data);
@@ -89,7 +91,7 @@ class UploadpriceAjaxController extends Myadminv2AjaxController {
 
   function checkValidate($item = null) {
 
-    $this->validateFields(array('rowstart', 'colname', 'colprice'), $item);
+    $this->validateFields(array('rowstart', 'colname'), $item);
 
     $fileName = $_FILES['ext']['name'];
     if (empty($fileName)) {
@@ -99,7 +101,8 @@ class UploadpriceAjaxController extends Myadminv2AjaxController {
     $pos = strrpos($fileName,'.');
     $this->params['ext'] = substr($fileName,$pos+1);
     $this->params['filename'] = $this->translit( substr($fileName,0,$pos) );
-
+    $this->params['priceincurr'] = (isset($this->params['priceincurr'])) ? 1 : 0;
+    $this->params['colprice'] = preg_replace("/\s+/ums","",$this->params['colprice']); 
     return $this->result;
 
   }
@@ -125,16 +128,25 @@ class UploadpriceAjaxController extends Myadminv2AjaxController {
 *  $object - объект загрузки прайсов для этой фабрики
 */
     $priceupload = $item->getFactory()->getPriceupload($item->getRealPath());
+    if (empty($this->params['colprice'])) {
+      $cats = false;
+    } else {
+      $cats = explode(",", $this->params['colprice']);
+    }
+    $params_for_parse = array(
+        'begin' => $this->params['rowstart'],
+        'pos_name' => $this->params['colname'],
+        'pos' => $cats,
+      );
     $result_parse = $priceupload->parse_price();
     if (!$result_parse) {
       $this->setErrorStatus(false, $priceupload->error_message);
       return $this->result;
     }
-    $result_add = $priceupload->add_db();
-    $priceupload->logWrite($item->getDir());
-    // $this->setErrorStatus(false, $priceupload->success_message);
-    // return $this->result;
 
+    $result_add = $priceupload->add_db($cats, $item->getPriceInCurr());
+    $priceupload->logWrite($item->getDir());
+    
     DB::getInstance()->commit();
 
     $this->result['c'] = strtolower($this->entityName);
@@ -144,6 +156,19 @@ class UploadpriceAjaxController extends Myadminv2AjaxController {
     // ActionController::addError($priceupload->error_message);
     return $this->result;
 
+  }
+  function DeletefileAction() {
+    $item = new $this->entityName($this->params);
+    $priceupload = $item->getFactory()->getPriceupload($item->getRealPath());
+    $priceupload->back_price_db($item->getPriceInCurr());
+    if (file_exists($item->getRealPath())) {
+      unlink($item->getRealPath());
+    }
+    $priceupload->logRemove($item->getDir());
+    $item->setExt('');
+    $item->setFilename('');
+    ActionController::addMessage('', "Цены возвращены в первоначальное состояние. Файл удален.");
+    return true;
   }
   function DeleteAction() {
     $item = new $this->entityName($this->params);

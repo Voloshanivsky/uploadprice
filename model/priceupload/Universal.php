@@ -76,7 +76,7 @@ Class PriceuploadUniversal
      * @param $kat11 integer цена за 11 категорию в долларах
      * @param $kat12 integer цена за 12 категорию в долларах
      */
-    public function add_price($name, $kat0, $kat1, $kat2, $kat3, $kat4, $kat5, $kat6, $kat7, $kat8, $kat9, $kat10, $kat11, $kat12)
+    public function add_price($name, $kat0, $kat1 = 0, $kat2 = 0, $kat3 = 0, $kat4 = 0, $kat5 = 0, $kat6 = 0, $kat7 = 0, $kat8 = 0, $kat9 = 0, $kat10 = 0, $kat11 = 0, $kat12 = 0)
     {
         $this->data[]=array(
             'name'=>$name,
@@ -113,6 +113,8 @@ Class PriceuploadUniversal
      * pos_10 int - номер ячейки, в которой содержится цена за 10 категорию
      * pos_11 int - номер ячейки, в которой содержится цена за 11 категорию
      * pos_12 int - номер ячейки, в которой содержится цена за 12 категорию
+     *
+     * да, надо переписать pos_0 - pos_12 как массив pos[0] - pos[12]
      */
     public function parse_price($params)
     {
@@ -269,6 +271,39 @@ Class PriceuploadUniversal
                 echo "$d_name is OK!<br>";
                 //break;
                 //$this->db->query($strSQL);
+            }
+        }
+    }
+
+    /**
+     * возвращаем цены в начальное состояние согласно лог-файлу
+     * @param $priceInCurr bool флажочек, означающий что прайс в валюте
+     */
+    public function back_price_db($priceInCurr = false)
+    {
+        if ($priceInCurr) {
+            $field_price = "pricecur";
+        } else {
+            $field_price = "price";
+        }
+
+        if (($handle = fopen("content/upload.csv", "r")) !== FALSE) {
+            while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
+                $goods_id = $data[0];
+                $cat_id = $data[1];
+                $price_to_change = $data[2];// старая цена
+                if ($cat_id == 0) {
+                    $strSQL="UPDATE goods ".
+                        "SET goods_$field_price = $price_to_change ".
+                        "WHERE goods.goods_id='$goods_id'";
+                } else {
+                    $strSQL = "UPDATE goodshascategory " .
+                        "SET goodshascategory_$field_price = $price_to_change " .
+                        "WHERE goodshascategory.goods_id='$goods_id' " .
+                        "AND (goodshascategory.category_id='$cat_id')";
+                }
+                // $this->db->query($strSQL);
+                
             }
         }
     }
@@ -567,7 +602,9 @@ Class PriceuploadUniversal
 
     }
     public function logRemove($dir = "") {
-        unlink($dir . "/" .$this->log_filename);
+        if (file_exists($dir . "/" .$this->log_filename)) {
+            unlink($dir . "/" .$this->log_filename);
+        }
     }
 
 }

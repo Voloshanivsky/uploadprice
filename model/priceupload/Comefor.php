@@ -80,14 +80,23 @@ class PriceuploadComefor extends PriceuploadUniversal
 
     /**
      *сохраняет информацию из поля $data в базу данных сайта
+     * @param $pId array массив, содержащий category_id для каждой из цен в прайсе
+     * @param $priceInCurr bool флажочек, означающий что прайс в валюте
+     * Добавил параметры для соответствия методу родительского класса
+     * Можно в универсальной сделать проверку, если категорию не передали то обновлять как тут
      */
-    public function add_db()
+    public function add_db($pId = false, $priceInCurr = false)
     {
         foreach ($this->data as $d)
         {
             $d_name=$d['name'];
             //echo $d_name."<br>";
             $d_price=$d['kat0'];
+            if ($priceInCurr) {
+                $field_price = "pricecur";
+            } else {
+                $field_price = "price";
+            }
             $factory_id=$this->factory_id;
 
             $goods = $this->findGoods($d_name, false, false);
@@ -99,13 +108,16 @@ class PriceuploadComefor extends PriceuploadUniversal
                 if ($diff > $this->warning_percent) {
                     $this->error_message .= "Цена на товар $d_name изменилась на более чем {$this->warning_percent}%, $oldPrice -> $d_price <br>";
                 }
-                $strSQL="UPDATE goods ".
-                    "SET goods_pricecur=$d_price ".
-                    "WHERE goods.goods_id='{$goods['id']}'";
+                if ($diff) {
+                    // обновляем, если цена изменилась
+                    $strSQL="UPDATE goods ".
+                        "SET goods_$field_price=$d_price ".
+                        "WHERE goods.goods_id='{$goods['id']}'";
 
-                $this->logForm($goods['id'], 0, $oldPrice, $d_price);
-                // $this->success_message .= $strSQL."<br>";
-                //$this->db->query($strSQL);
+                    $this->logForm($goods['id'], 0, $oldPrice, $d_price);
+                    // $this->success_message .= $strSQL."<br>";
+                    //$this->db->query($strSQL);
+                }
             }
             else
             {
@@ -116,7 +128,6 @@ class PriceuploadComefor extends PriceuploadUniversal
         }
         return true;
     }
-
 
     /**
      * для тестов

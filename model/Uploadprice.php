@@ -8,6 +8,7 @@ class UploadpriceTable extends EntityTable{
     $this->addField(new Field('rowstart', 'int', false, 0));
     $this->addField(new Field('colname', 'varchar(255)', false, ''));
     $this->addField(new Field('colprice', 'varchar(255)', false, ''));
+    $this->addField(new Field('priceincurr', 'tinyint(1)', false, 0));// цены в валюте
     $this->addField(new Field('success', 'tinyint(1)', false, 0));
     $this->addField(new Field('rollback', 'tinyint(1)', false, 0));//был ли откат измений
     $this->addField(new Field('lastchange', 'datetime', false, '2016-05-01 00:00:00'));
@@ -53,6 +54,9 @@ class Uploadprice extends Entity {
   }
   function getColprice() {
     return $this->getField('colprice');
+  }
+  function getPriceInCurr() {
+    return $this->getField('priceincurr');
   }
   function getSuccess() {
     return $this->getField('success');
