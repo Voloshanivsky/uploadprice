@@ -27,7 +27,7 @@ Class PriceuploadUniversal
     /**
      * @var DB
      */
-    private $db;    
+    protected $db;    
     /**
      * @var error_message - описания ошибок при неудачных выполнениях методов
      */
@@ -45,11 +45,15 @@ Class PriceuploadUniversal
      */
     public $log_filename;
     /**
+     * @var dir - папка с файлами (xml и log)
+     */
+    public $dir;
+    /**
      * Universal constructor.
      * @param $f string file файл с прайсом в конструктор
      * @param $factory int id фабрики с которой в данный момент работаем
      */
-    function __construct($f, $factory)
+    function __construct($f, $factory, $dir)
     {
         if ($f)
             $this->file1=$f;
@@ -57,6 +61,7 @@ Class PriceuploadUniversal
         $this->db = DB::getInstance();
         $this->warning_percent = 10;
         $this->log_filename = $this->makeLogName();
+        $this->dir = $dir;
 
     }
     /**
@@ -287,7 +292,7 @@ Class PriceuploadUniversal
             $field_price = "price";
         }
 
-        if (($handle = fopen("content/upload.csv", "r")) !== FALSE) {
+        if (($handle = fopen($this->dir .'/' .$this->log_filename, "r")) !== FALSE) {
             while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
                 $goods_id = $data[0];
                 $cat_id = $data[1];
@@ -302,7 +307,7 @@ Class PriceuploadUniversal
                         "WHERE goodshascategory.goods_id='$goods_id' " .
                         "AND (goodshascategory.category_id='$cat_id')";
                 }
-                // $this->db->query($strSQL);
+                $this->db->query($strSQL);
                 
             }
         }
@@ -584,7 +589,7 @@ Class PriceuploadUniversal
     /**
      * записываем лог на диск
      */
-    public function logWrite($dir = "")
+    public function logWrite()
     {
         if ($this->log)
         {
@@ -595,15 +600,15 @@ Class PriceuploadUniversal
                 $oldPrice=$logRec['oldPrice'];
                 $newPrice=$logRec['newPrice'];
                 $str="$goods_id;$cat_id;$oldPrice;$newPrice".PHP_EOL;
-                file_put_contents($dir . "/" . $this->log_filename, $str, FILE_APPEND);
+                file_put_contents($this->dir . "/" . $this->log_filename, $str, FILE_APPEND);
             }
-            $this->success_message .= $dir . "/" . $this->log_filename."<br>";
+            $this->success_message .= $this->dir . "/" . $this->log_filename."<br>";
         }
 
     }
-    public function logRemove($dir = "") {
-        if (file_exists($dir . "/" .$this->log_filename)) {
-            unlink($dir . "/" .$this->log_filename);
+    public function logRemove() {
+        if (file_exists($this->dir . "/" .$this->log_filename)) {
+            unlink($this->dir . "/" .$this->log_filename);
         }
     }
 

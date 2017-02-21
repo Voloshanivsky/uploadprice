@@ -106,7 +106,7 @@ class PriceuploadComefor extends PriceuploadUniversal
                 $oldPrice = $goods['price'];
                 $diff=$this->priceDif($d_price,$oldPrice);
                 if ($diff > $this->warning_percent) {
-                    $this->error_message .= "Цена на товар $d_name изменилась на более чем {$this->warning_percent}%, $oldPrice -> $d_price <br>";
+                    $this->error_message .= "Цена на товар $d_name (ID={$goods['id']}) изменилась на более чем {$this->warning_percent}%, $oldPrice -> $d_price <br>";
                 }
                 if ($diff) {
                     // обновляем, если цена изменилась
@@ -116,7 +116,7 @@ class PriceuploadComefor extends PriceuploadUniversal
 
                     $this->logForm($goods['id'], 0, $oldPrice, $d_price);
                     // $this->success_message .= $strSQL."<br>";
-                    //$this->db->query($strSQL);
+                    $this->db->query($strSQL);
                 }
             }
             else

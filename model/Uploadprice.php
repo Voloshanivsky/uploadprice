@@ -37,6 +37,12 @@ class Uploadprice extends Entity {
   function getRealPath() {
     return $this->getDir()."/".$this->getRealFilename();
   }
+  function getRealPathLogFile() {
+    return $this->getDir().'/logs_add.csv';
+  }
+  function issetLogFile() {
+    return file_exists($this->getRealPathLogFile());
+  }
   function getFactoryId() {
     return $this->getField('factory');
   }
@@ -73,6 +79,9 @@ class Uploadprice extends Entity {
   }  
   function setFilename($value) {
     return $this->setField('filename', $value);
+  }
+  function setRollback($value) {
+    return $this->setField('rollback', $value);
   }
 }
 
